@@ -1,0 +1,31 @@
+service: st-userprofile
+frameworkVersion: '^3'
+
+provider:
+  name: aws
+  runtime: go1.x
+  region: us-east-1
+  deploymentBucket:
+    name: artifacts-bcode
+  environment:
+    CREATE_USER: ${self:custom.routes.CreateUser}
+    NETWORK_HOST: ${ssm:/luvnet/${opt:stage, 'development'}/NETWORK_HOST, ''}
+    NETWORK_DB: ${ssm:/luvnet/${opt:stage, 'development'}/NETWORK_DB, ''}
+custom:
+  routes:
+    CreateUser: /v1/user/create
+  
+package:
+  patterns:
+    - '!./**'
+    - ./bin/**
+
+functions:
+  lambda:
+    role: arn:aws:iam::515022285041:role/Lambda
+    handler: bin/lambda
+    events:
+      # userprofile
+      - http:
+          path: ${self:custom.routes.CreateUser}
+          method: post
